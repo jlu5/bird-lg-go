@@ -1,0 +1,43 @@
+kind: pipeline
+name: default
+
+environment:
+  GO111MODULE: auto
+
+steps:
+  - name: "fetch git tags"
+    image: alpine/git
+    commands:
+      - git fetch --tags
+
+  - name: "fetch deps & test"
+    image: golang
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - go get -v -t -d ./...
+      - go test -v ./...
+
+  - name: "run GoReleaser"
+    image: golang:1.17
+    environment:
+      GITHUB_TOKEN:
+        from_secret: github_token
+    volumes:
+      - name: deps
+        path: /go
+    commands:
+      - curl -sL https://git.io/goreleaser | bash
+    when:
+      event: tag
+
+volumes:
+  - name: deps
+    temp: {}
+
+trigger:
+  ref:
+    include:
+    - refs/heads/master
+    - refs/tags/**
