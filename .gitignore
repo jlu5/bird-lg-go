@@ -24,3 +24,4 @@ frontend/bindata.go
 # don't include generated Dockerfiles
 frontend/Dockerfile.*
 proxy/Dockerfile.*
+dist/
