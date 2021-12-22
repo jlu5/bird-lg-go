@@ -18,6 +18,10 @@ type settingType struct {
 	netSpecificMode string
 	titleBrand      string
 	navBarBrand     string
+	navBarBrandURL  string
+	navBarAllServer string
+	navBarAllURL    string
+	bgpmapInfo      string
 	telegramBotName string
 	protocolFilter  []string
 }
@@ -29,10 +33,14 @@ func main() {
 		servers:         []string{""},
 		proxyPort:       8000,
 		whoisServer:     "whois.verisign-grs.com",
-		listen:          ":5000",
+		listen:          "5000",
 		dnsInterface:    "asn.cymru.com",
 		titleBrand:      "Bird-lg Go",
 		navBarBrand:     "Bird-lg Go",
+		navBarBrandURL:  "/",
+		navBarAllServer: "All Servers",
+		navBarAllURL:    "all",
+		bgpmapInfo:      "asn,as-name,ASName,descr",
 		telegramBotName: "",
 		protocolFilter:  []string{},
 	}
@@ -68,6 +76,18 @@ func main() {
 	if env := os.Getenv("BIRDLG_NAVBAR_BRAND"); env != "" {
 		settingDefault.navBarBrand = env
 	}
+	if env := os.Getenv("BIRDLG_NAVBAR_BRAND_URL"); env != "" {
+		settingDefault.navBarBrandURL = env
+	}
+	if env := os.Getenv("BIRDLG_NAVBAR_ALL_SERVERS"); env != "" {
+		settingDefault.navBarAllServer = env
+	}
+	if env := os.Getenv("BIRDLG_NAVBAR_ALL_URL"); env != "" {
+		settingDefault.navBarAllURL = env
+	}
+	if env := os.Getenv("BIRDLG_BGPMAP_INFO"); env != "" {
+		settingDefault.bgpmapInfo = env
+	}
 	if env := os.Getenv("BIRDLG_TELEGRAM_BOT_NAME"); env != "" {
 		settingDefault.telegramBotName = env
 	}
@@ -84,6 +104,10 @@ func main() {
 	netSpecificModePtr := flag.String("net-specific-mode", settingDefault.netSpecificMode, "network specific operation mode, [(none)|dn42]")
 	titleBrandPtr := flag.String("title-brand", settingDefault.titleBrand, "prefix of page titles in browser tabs")
 	navBarBrandPtr := flag.String("navbar-brand", settingDefault.navBarBrand, "brand to show in the navigation bar")
+	navBarBrandURLPtr := flag.String("navbar-brand-url", settingDefault.navBarBrandURL, "the url of the brand to show in the navigation bar")
+	navBarAllServerPtr := flag.String("navbar-all-servers", settingDefault.navBarAllServer, "the text of \"All servers\" button in the navigation bar")
+	navBarAllURL := flag.String("navbar-all-url", settingDefault.navBarAllURL, "the URL of \"All servers\" button")
+	bgpmapInfo := flag.String("bgpmap-info", settingDefault.bgpmapInfo, "the infos displayed in bgpmap, separated by comma, start with \":\" means allow multiline")
 	telegramBotNamePtr := flag.String("telegram-bot-name", settingDefault.telegramBotName, "telegram bot name (used to filter @bot commands)")
 	protocolFilterPtr := flag.String("protocol-filter", strings.Join(settingDefault.protocolFilter, ","),
 		"protocol types to show in summary tables (comma separated list); defaults to all if not set")
@@ -91,6 +115,11 @@ func main() {
 
 	if *serversPtr == "" {
 		panic("no server set")
+	}
+
+	if !strings.Contains(*listenPtr, ":") {
+		listenHost := ":" + (*listenPtr)
+		listenPtr = &listenHost
 	}
 
 	servers := strings.Split(*serversPtr, ",")
@@ -122,6 +151,10 @@ func main() {
 		strings.ToLower(*netSpecificModePtr),
 		*titleBrandPtr,
 		*navBarBrandPtr,
+		*navBarBrandURLPtr,
+		*navBarAllServerPtr,
+		*navBarAllURL,
+		*bgpmapInfo,
 		*telegramBotNamePtr,
 		protocolFilter,
 	}
