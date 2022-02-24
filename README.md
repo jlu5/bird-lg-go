@@ -9,7 +9,7 @@ An alternative implementation for [bird-lg](https://github.com/sileht/bird-lg) w
 - [Bird-lg-go](#bird-lg-go)
   - [Table of Contents](#table-of-contents)
   - [Build Instructions](#build-instructions)
-  - [Build Docker Images](#build-docker-images)
+    - [Build Docker Images](#build-docker-images)
   - [Frontend](#frontend)
   - [Proxy](#proxy)
   - [Advanced Features](#advanced-features)
@@ -17,8 +17,6 @@ An alternative implementation for [bird-lg](https://github.com/sileht/bird-lg) w
     - [IP addresses](#ip-addresses)
     - [API](#api)
     - [Telegram Bot Webhook](#telegram-bot-webhook)
-      - [Example of setting the webhook](#example-of-setting-the-webhook)
-      - [Supported commands](#supported-commands)
   - [Credits](#credits)
   - [License](#license)
 
@@ -28,40 +26,16 @@ You need to have **Go 1.16 or newer** installed on your machine.
 
 Run `make` to build binaries for both the frontend and the proxy.
 
-Optionally run `make install` to install them to `/usr/local/bin`.
+Optionally run `make install` to install them to `/usr/local/bin` (`bird-lg-go` and `bird-lgproxy-go`).
 
-Or, you can manually do the building steps:
+### Build Docker Images
 
-```bash
-# Build frontend binary
-cd frontend
-go build -ldflags "-w -s" -o frontend
-cd ..
+Use the Dockerfiles in `frontend` and `proxy` directory.
 
-# Build proxy binary
-cd proxy
-go build -ldflags "-w -s" -o proxy
-cd ..
-```
+Ready-to-use images are available at:
 
-## Build Docker Images
-
-Run `make dockerfile` and you'll get a bunch of Dockerfiles for different architectures:
-
-- `frontend/Dockerfile.amd64`
-- `frontend/Dockerfile.arm32v7`
-- `frontend/Dockerfile.arm64v8`
-- `frontend/Dockerfile.i386`
-- `frontend/Dockerfile.ppc64le`
-- `frontend/Dockerfile.s390x`
-- `proxy/Dockerfile.amd64`
-- `proxy/Dockerfile.arm32v7`
-- `proxy/Dockerfile.arm64v8`
-- `proxy/Dockerfile.i386`
-- `proxy/Dockerfile.ppc64le`
-- `proxy/Dockerfile.s390x`
-
-`cd` into either frontend or proxy directory, rename the Dockerfile for your architecture to `Dockerfile` and run `docker build .` as usual. In most cases you'll want `Dockerfile.amd64`.
+- Frontend: <https://hub.docker.com/r/xddxdd/bird-lg-go>
+- Proxy: <https://hub.docker.com/r/xddxdd/bird-lgproxy-go>
 
 ## Frontend
 
@@ -93,6 +67,8 @@ Usage: all configuration is done via commandline parameters or environment varia
 | --navbar-all-url | BIRDLG_NAVBAR_ALL_URL | the URL of "All servers" button (default "all") |
 | --net-specific-mode | BIRDLG_NET_SPECIFIC_MODE | apply network-specific changes for some networks, use "dn42" for BIRD in dn42 network |
 | --protocol-filter | BIRDLG_PROTOCOL_FILTER | protocol types to show in summary tables (comma separated list); defaults to all if not set |
+| --name-filter | BIRDLG_NAME_FILTER | protocol names to hide in summary tables (RE2 syntax); defaults to none if not set |
+| --time-out | BIRDLG_TIMEOUT | time before request timed out, in seconds; defaults to 120 if not set |
 
 Example: the following command starts the frontend with 2 BIRD nodes, with domain name "gigsgigscloud.dn42.lantian.pub" and "hostdare.dn42.lantian.pub", and proxies are running on port 8000 on both nodes.
 
@@ -136,6 +112,7 @@ Usage: all configuration is done via commandline parameters or environment varia
 | --bird | BIRD_SOCKET | socket file for bird, set either in parameter or environment variable BIRD_SOCKET (default "/var/run/bird/bird.ctl") |
 | --listen | BIRDLG_PROXY_PORT | listen address, set either in parameter or environment variable  BIRDLG_PROXY_PORT(default "8000") |
 | --traceroute_bin | BIRDLG_TRACEROUTE_BIN | traceroute binary file, set either in parameter or environment variable  BIRDLG_TRACEROUTE_BIN(default "traceroute") |
+| --traceroute_raw | BIRDLG_TRACEROUTE_RAW | whether to display traceroute outputs raw (default false) |
 
 Example: start proxy with default configuration, should work "out of the box" on Debian 9 with BIRDv1:
 
@@ -193,30 +170,13 @@ These three servers are displayed as "Prod", "Test1" and "Test2" in the user int
 
 The frontend provides an API for running BIRD/traceroute/whois queries.
 
-See [API docs](API.md) for detailed information.
+See [API docs](docs/API.md) for detailed information.
 
 ### Telegram Bot Webhook
 
 The frontend can act as a Telegram Bot webhook endpoint, to add BGP route/traceroute/whois lookup functionality to your tech group.
 
-There is no configuration necessary on the frontend, just start it up normally.
-
-Set your Telegram Bot webhook URL to `https://your.frontend.com/telegram/alpha+beta+gamma`, where `alpha+beta+gamma` is the list of servers to be queried on Telegram commands, separated by `+`.
-
-You may omit `alpha+beta+gamma` to use all your servers, but it is not recommended when you have lots of servers, or the message would be too long and hard to read.
-
-#### Example of setting the webhook
-
-```bash
-curl "https://api.telegram.org/bot${BOT_TOKEN}/setWebhook?url=https://your.frontend.com:5000/telegram/alpha+beta+gamma"
-```
-
-#### Supported commands
-
-- `path`: Show bird's ASN path to target IP
-- `route`: Show bird's preferred route to target IP
-- `trace`: Traceroute to target IP/domain
-- `whois`: Whois query
+See [Telegram docs](docs/Telegram.md) for detailed information.
 
 ## Credits
 
