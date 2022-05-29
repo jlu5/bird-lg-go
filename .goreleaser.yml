@@ -24,6 +24,7 @@ builds:
 blobs:
   -
     provider: s3
+    # PUBLIC ACCESS: use https://dl.highdef.network/bird-lg-go/<version>/<filename> or GitHub releases
     endpoint: https://s3.us-west-000.backblazeb2.com
     region: us-west-000
     bucket: highdefnet-bin
