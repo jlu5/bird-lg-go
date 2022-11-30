@@ -4,28 +4,35 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"html/template"
 	"net/http"
-	"net/url"
 	"regexp"
 	"sort"
 	"strings"
-	"text/template"
 )
 
 // static options map
 var optionsMap = map[string]string{
-	"summary":            "show protocols",
-	"detail":             "show protocols all",
-	"route":              "show route for ...",
-	"route_all":          "show route for ... all",
-	"route_bgpmap":       "show route for ... (bgpmap)",
-	"route_where":        "show route where net ~ [ ... ]",
-	"route_where_all":    "show route where net ~ [ ... ] all",
-	"route_where_bgpmap": "show route where net ~ [ ... ] (bgpmap)",
-	"route_generic":      "show route ...",
-	"generic":            "show ...",
-	"whois":              "whois ...",
-	"traceroute":         "traceroute ...",
+	"summary":                          "show protocols",
+	"detail":                           "show protocols all ...",
+	"route_from_protocol":              "show route protocol ...",
+	"route_from_protocol_all":          "show route protocol ... all",
+	"route_from_protocol_all_primary":  "show route protocol ... all primary",
+	"route_filtered_from_protocol":     "show route filtered protocol ...",
+	"route_filtered_from_protocol_all": "show route filtered protocol ... all",
+	"route_from_origin":                "show route where bgp_path.last = ...",
+	"route_from_origin_all":            "show route where bgp_path.last = ... all",
+	"route_from_origin_all_primary":    "show route where bgp_path.last = ... all primary",
+	"route":                            "show route for ...",
+	"route_all":                        "show route for ... all",
+	"route_bgpmap":                     "show route for ... (bgpmap)",
+	"route_where":                      "show route where net ~ [ ... ]",
+	"route_where_all":                  "show route where net ~ [ ... ] all",
+	"route_where_bgpmap":               "show route where net ~ [ ... ] (bgpmap)",
+	"route_generic":                    "show route ...",
+	"generic":                          "show ...",
+	"whois":                            "whois ...",
+	"traceroute":                       "traceroute ...",
 }
 
 // pre-compiled regexp and constant statemap for summary rendering
@@ -38,7 +45,7 @@ var summaryStateMap = map[string]string{
 }
 
 // render the page template
-func renderPageTemplate(w http.ResponseWriter, r *http.Request, title string, content string) {
+func renderPageTemplate(w http.ResponseWriter, r *http.Request, title string, content template.HTML) {
 	path := r.URL.Path[1:]
 	split := strings.SplitN(path, "/", 3)
 
@@ -48,32 +55,26 @@ func renderPageTemplate(w http.ResponseWriter, r *http.Request, title string, co
 	// Use a default URL if the request URL is too short
 	// The URL is for return to summary page
 	if len(split) < 2 {
-		path = "summary/" + url.PathEscape(strings.Join(setting.servers, "+")) + "/"
+		path = "summary/" + strings.Join(setting.servers, "+") + "/"
 	} else if len(split) == 2 {
 		path += "/"
 	}
 
 	split = strings.SplitN(path, "/", 3)
 
-	serversEscaped := make([]string, len(setting.servers))
-	for i, v := range setting.servers {
-		serversEscaped[i] = url.PathEscape(v)
-	}
-
 	args := TemplatePage{
 		Options:              optionsMap,
 		Servers:              setting.servers,
-		ServersEscaped:       serversEscaped,
 		ServersDisplay:       setting.serversDisplay,
-		AllServersLinkActive: strings.ToLower(split[1]) == strings.ToLower(strings.Join(setting.servers, "+")),
-		AllServersURL:        url.PathEscape(strings.Join(setting.servers, "+")),
+		AllServersLinkActive: strings.EqualFold(split[1], strings.Join(setting.servers, "+")),
+		AllServersURL:        strings.Join(setting.servers, "+"),
 		AllServerTitle:       setting.navBarAllServer,
 		AllServersURLCustom:  setting.navBarAllURL,
 		IsWhois:              isWhois,
 		WhoisTarget:          whoisTarget,
 
 		URLOption:  strings.ToLower(split[0]),
-		URLServer:  url.PathEscape(strings.ToLower(split[1])),
+		URLServer:  strings.ToLower(split[1]),
 		URLCommand: split[2],
 		Title:      setting.titleBrand + title,
 		Brand:      setting.navBarBrand,
@@ -91,7 +92,7 @@ func renderPageTemplate(w http.ResponseWriter, r *http.Request, title string, co
 
 // Write the given text to http response, and add whois links for
 // ASNs and IP addresses
-func smartFormatter(s string) string {
+func smartFormatter(s string) template.HTML {
 	var result string
 	result += "<pre>"
 	s = template.HTMLEscapeString(s)
@@ -108,7 +109,7 @@ func smartFormatter(s string) string {
 		result += lineFormatted + "\n"
 	}
 	result += "</pre>"
-	return result
+	return template.HTML(result)
 }
 
 // Parse bird show protocols result
@@ -200,11 +201,11 @@ func summaryParse(data string, serverName string) (TemplateSummary, error) {
 }
 
 // Output a table for the summary page
-func summaryTable(data string, serverName string) string {
+func summaryTable(data string, serverName string) template.HTML {
 	result, err := summaryParse(data, serverName)
 
 	if err != nil {
-		return "<pre>" + template.HTMLEscapeString(err.Error()) + "</pre>"
+		return template.HTML("<pre>" + template.HTMLEscapeString(err.Error()) + "</pre>")
 	}
 
 	// render the summary template
@@ -215,5 +216,5 @@ func summaryTable(data string, serverName string) string {
 		fmt.Println("Error rendering summary:", err.Error())
 	}
 
-	return buffer.String()
+	return template.HTML(buffer.String())
 }
