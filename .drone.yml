@@ -44,4 +44,4 @@ trigger:
   ref:
     include:
     - refs/heads/master
-    - refs/tags/**
+    - refs/tags/0.*
