@@ -10,17 +10,18 @@ steps:
     commands:
       - git fetch --tags
 
-  - name: "fetch deps & test"
-    image: golang
+  - name: "build + test"
+    image: golang:1.20
     volumes:
       - name: deps
         path: /go
     commands:
-      - go get -v -t -d ./...
-      - go test -v ./...
+      - make
+      - cd frontend && go test -v; cd ..
+      - cd proxy && go test -v; cd ..
 
   - name: "run GoReleaser"
-    image: golang:1.17
+    image: golang:1.20
     environment:
       GITHUB_TOKEN:
         from_secret: github_token
@@ -43,5 +44,5 @@ volumes:
 trigger:
   ref:
     include:
-    - refs/heads/master
+    - refs/heads/**
     - refs/tags/0.*
