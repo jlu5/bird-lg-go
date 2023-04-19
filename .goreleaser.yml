@@ -1,25 +1,19 @@
 project_name: bird-lg-go
 
+env:
+  - GO111MODULE=on
+
 builds:
   - main: ./frontend
     id: "frontend"
     binary: frontend
     goos: &goos
       - linux
-      - darwin
-      - windows
-      - freebsd
-      - openbsd
-    env: &env
-      # Go 1.16 and later require SSE, so the default GO386=387 in goreleaser is not supported
-      - GO386=softfloat
-      - GO111MODULE=auto
 
   - main: ./proxy
     id: "proxy"
     binary: proxy
     goos: *goos
-    env: *env
 
 blobs:
   -
